@@ -1,5 +1,8 @@
 from django.contrib import admin
 from .models import EmailCampaign, Recipient, GeneratedEmail
+from .models import EmailReply
+
+admin.site.register(EmailReply)
 
 class RecipientInline(admin.TabularInline):
     model = Recipient

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import EmailCampaign, Recipient, GeneratedEmail
+from .models import EmailCampaign, Recipient, GeneratedEmail,EmailReply
 from django.core.files.base import ContentFile
 import base64
 
@@ -7,7 +7,10 @@ class RecipientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipient
         fields = ['id', 'email', 'name', 'is_sent', 'sent_at']
-
+class EmailReplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailReply
+        fields = '__all__'
 class GeneratedEmailSerializer(serializers.ModelSerializer):
     class Meta:
         model = GeneratedEmail
@@ -16,6 +19,7 @@ class GeneratedEmailSerializer(serializers.ModelSerializer):
 class EmailCampaignSerializer(serializers.ModelSerializer):
     recipients = RecipientSerializer(many=True, read_only=True)
     generated_email = GeneratedEmailSerializer(read_only=True)
+    replies = EmailReplySerializer(many=True, read_only=True)
     attachments = serializers.ListField(
         child=serializers.FileField(
             max_length=100000,
@@ -31,7 +35,7 @@ class EmailCampaignSerializer(serializers.ModelSerializer):
         model = EmailCampaign
         fields = [
             'id', 'name', 'topic', 'details', 'tone', 'created_at',
-            'recipients', 'generated_email', 'attachments'
+            'recipients', 'generated_email', 'attachments','replies'
         ]
         extra_kwargs = {
             'attachments': {'write_only': True}

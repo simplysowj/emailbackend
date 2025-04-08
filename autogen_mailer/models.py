@@ -34,3 +34,16 @@ class GeneratedEmail(models.Model):
     body_text = models.TextField()
     body_html = models.TextField()
     generated_at = models.DateTimeField(auto_now_add=True)
+
+class EmailReply(models.Model):
+    campaign = models.ForeignKey(EmailCampaign, on_delete=models.CASCADE, related_name='replies')
+    recipient = models.ForeignKey(Recipient, on_delete=models.CASCADE, related_name='replies')
+    original_message_id = models.CharField(max_length=255)
+    reply_message_id = models.CharField(max_length=255)
+    reply_content = models.TextField()
+    received_at = models.DateTimeField(auto_now_add=True)
+    processed = models.BooleanField(default=False)
+    reply_sent = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('reply_message_id', 'recipient')

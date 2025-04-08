@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, JSONParser
 from django.shortcuts import get_object_or_404
-from .models import EmailCampaign, Recipient, GeneratedEmail
+from .models import EmailCampaign, Recipient, GeneratedEmail, EmailReply
 from .serializers import EmailCampaignSerializer, RecipientSerializer, GeneratedEmailSerializer
 from .autogen_service import AutoGenEmailGenerator
 from .gmail_service import GmailService
@@ -12,6 +12,7 @@ from io import TextIOWrapper
 from rest_framework.permissions import AllowAny
 from django.utils import timezone
 import logging
+from .reply_handler import ReplyHandler
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -30,7 +31,99 @@ class EmailCampaignViewSet(viewsets.ModelViewSet):
     
     def get_hardcoded_user_email(self):
         return self.HARDCODED_USER['email']
+
     
+
+
+    @action(detail=True, methods=['get'])
+    def reply_stats(self, request, pk=None):
+        """Get statistics about replies for a campaign"""
+        campaign = self.get_object()
+        stats = {
+            'total_replies': EmailReply.objects.filter(campaign=campaign).count(),
+            'pending_replies': EmailReply.objects.filter(
+                campaign=campaign, 
+                processed=False
+            ).count(),
+            'sent_replies': EmailReply.objects.filter(
+                campaign=campaign, 
+                reply_sent=True
+            ).count(),
+        }
+        return Response(stats)
+
+    @action(detail=True, methods=['post'])
+    def process_replies(self, request, pk=None):
+        """Process replies for a specific campaign with detailed response"""
+        try:
+            campaign = self.get_object()
+            gmail = GmailService()
+            reply_handler = ReplyHandler()
+            
+            # Step 1: Find new replies
+            found_count = gmail.process_replies_for_campaign(campaign)
+            logger.info(f"Found {found_count} new replies for campaign {campaign.id}")
+            
+            # Step 2: Process replies
+            sent_count = reply_handler.process_pending_replies_for_campaign(campaign)
+            logger.info(f"Sent {sent_count} responses for campaign {campaign.id}")
+            
+            # Get updated stats
+            stats = self.reply_stats(request, pk).data
+            
+            return Response({
+                'status': 'success',
+                'message': f'Processed {found_count} replies and sent {sent_count} responses',
+                'stats': stats,
+                'details': {
+                    'new_replies_found': found_count,
+                    'responses_sent': sent_count,
+                    'campaign_id': campaign.id,
+                    'campaign_name': campaign.name
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Error processing replies: {str(e)}", exc_info=True)
+            return Response(
+                {
+                    'status': 'error',
+                    'message': str(e),
+                    'details': {
+                        'campaign_id': pk,
+                        'error_type': type(e).__name__
+                    }
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+     # Add this new action just before the RecipientViewSet class definition
+    @action(detail=True, methods=['get'])
+    def verify_replies(self, request, pk=None):
+        """Verify reply processing status"""
+        campaign = self.get_object()
+        
+        # Check for unprocessed replies
+        pending_replies = EmailReply.objects.filter(
+            campaign=campaign,
+            processed=False
+        ).count()
+        
+        # Get last processing attempt
+        last_processed = EmailReply.objects.filter(
+            campaign=campaign,
+            processed=True
+        ).order_by('-received_at').first()
+        
+        return Response({
+            'status': 'success',
+            'campaign_id': campaign.id,
+            'pending_replies': pending_replies,
+            'last_processed': last_processed.received_at if last_processed else None,
+            'last_recipient': last_processed.recipient.email if last_processed else None,
+            'message': 'Verification complete'
+        })
+
+        
     @action(detail=True, methods=['post'])
     def import_recipients(self, request, pk=None):
         campaign = get_object_or_404(EmailCampaign, pk=pk)  # Fixed typo
