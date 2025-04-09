@@ -12,7 +12,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 CSRF_COOKIE_SECURE = False
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000',
+                       'https://email-backend-bee9bjdec6gkhuf3.eastus2-01.azurewebsites.net',
+                        'https://black-bay-0ac87d80f.6.azurestaticapps.net'
+                       ]
 
 
 
@@ -76,12 +79,13 @@ MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:8000",
-    "https://black-bay-0ac87d80f.6.azurestaticapps.net"
+    "https://black-bay-0ac87d80f.6.azurestaticapps.net","https://email-backend-bee9bjdec6gkhuf3.eastus2-01.azurewebsites.net"
 ]
 CORS_ALLOW_ALL_ORIGINS = True  # Temporarily allow all origins
 CSRF_TRUSTED_ORIGINS = ["http://localhost:5173",
                        "http://127.0.0.1:8000",
-                       "https://black-bay-0ac87d80f.6.azurestaticapps.net"]  # Include frontend origin
+                       "https://black-bay-0ac87d80f.6.azurestaticapps.net",
+                       "https://email-backend-bee9bjdec6gkhuf3.eastus2-01.azurewebsites.net"]  # Include frontend origin
 CORS_ALLOW_CREDENTIALS = True  # Allow cookies and authentication
 
 
