@@ -10,10 +10,15 @@ class ReplyHandler:
     def __init__(self):
         self.client = OpenAI(api_key="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")
         self.gmail = GmailService()
+        print("self.gmail")
+        print(self.gmail)
+        
     
     def generate_reply(self, email_reply):
+        print(f"Recipient ID: {email_reply.recipient.id}")
         """Generate a personalized reply using AI"""
         try:
+            print("replyhandler")
             # Verify recipient still exists
             if not Recipient.objects.filter(pk=email_reply.recipient.id).exists():
                 return None
@@ -49,6 +54,8 @@ class ReplyHandler:
             campaign=campaign,
             processed=False
         )
+        print(pending_replies.count())
+        print("pending_replies.count()")
         results = {
         'total': pending_replies.count(),
         'success': 0,

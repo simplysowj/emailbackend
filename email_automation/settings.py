@@ -72,7 +72,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:8000",
+    "https://black-bay-0ac87d80f.6.azurestaticapps.net"
+]
+CORS_ALLOW_ALL_ORIGINS = True  # Temporarily allow all origins
+CSRF_TRUSTED_ORIGINS = ["http://localhost:5173",
+                       "http://127.0.0.1:8000",
+                       "https://black-bay-0ac87d80f.6.azurestaticapps.net"]  # Include frontend origin
+CORS_ALLOW_CREDENTIALS = True  # Allow cookies and authentication
+
 
 # settings.py
 
@@ -147,3 +157,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+STATIC_URL = '/static/'  
+STATIC_ROOT = os.path.join(BASE_DIR, 'static') 

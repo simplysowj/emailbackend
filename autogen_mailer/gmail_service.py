@@ -138,25 +138,76 @@ class GmailService:
     def process_replies_for_campaign(self, campaign):
         """Check for replies to a specific campaign with improved matching"""
         try:
+            print("entered to reply")
             subject = campaign.generated_email.subject
+            print("subject")
+            print(subject)
             clean_subject = re.sub(r'[^a-zA-Z0-9 ]', '', subject)  # Clean special chars
+
+            original_subject = campaign.generated_email.subject
+            print(f"Original subject: '{original_subject}'")
             
+            # Keep apostrophes and common punctuation
+            clean_subject = re.sub(r'[^\w\s\'\-\.!]', '', original_subject).strip()
+            print(f"Cleaned subject: '{clean_subject}'")
+            
+            # Extract base subject without reply prefixes
+            base_subject = re.sub(r'^(Re:|RE:|Fwd:|FW:)\s*', '', clean_subject, flags=re.IGNORECASE)
+            base_subject = base_subject.strip()
+            print("clean_subject")
+            print(clean_subject)
             # More flexible search query
-            query = f'(subject:{clean_subject} OR "Re: {clean_subject}") in:inbox from:-me'
+            query = f'(subject:{clean_subject} OR "Re:{clean_subject}") in:inbox from:-me'
+            queries = [
+                f'subject:"{clean_subject}"',  # Exact match with original punctuation
+                f'subject:"{base_subject}"',   # Base subject without reply markers
+                f'subject:"Re: {base_subject}"',  # Standard reply format
+                f'subject:"RE: {base_subject}"',  # All caps reply
+                f'subject:"Re:{base_subject}"',   # No space after colon
+                f'"Re: {base_subject}" in:inbox',  # Specific inbox search
+                f'"{base_subject}" in:inbox'      # Fallback broad search
+            ]
+            print("query")
+            print(query)
+            all_messages = []
+            for query in queries:
+                print(f"\nTrying query: '{query}'")
+                try:
+                    results = self.service.users().messages().list(
+                        userId='me',  # Using 'me' for authenticated user
+                        q=query,
+                        maxResults=50
+                    ).execute()
+                    
+                    print(f"Found {results.get('resultSizeEstimate', 0)} results")
+                    if results.get('messages'):
+                        all_messages.extend(results['messages'])
+                
+                except Exception as e:
+                    print(f"Error with query '{query}': {str(e)}")
+                    continue
+            print("results")
+            print(results)
             
-            results = self.service.users().messages().list(
-                userId=self.user_id,
-                q=query,
-                maxResults=50
-            ).execute()
+            # Deduplicate messages
+            unique_messages = {msg['id']: msg for msg in all_messages}.values()
+            print(f"\nTotal unique replies found: {len(unique_messages)}")
             
-            messages = results.get('messages', [])
+            # Process the found replies
+            reply_stats = {'total': 0, 'success': 0, 'failed': 0, 'details': []}
+            #messages = results.get('messages', [])
+            #print(messages)
             processed_count = 0
             
-            for msg in messages:
+            for msg in unique_messages:
+                reply_stats['total'] += 1
                 try:
+                    print("messages")
                     message = self.get_message(msg['id'])
+                    print(message)
                     thread_messages = self.get_thread_messages(message['threadId'])
+                    print(len(thread_messages))
+                    print("len(thread_messages)")
                     
                     if len(thread_messages) < 2:
                         continue
@@ -166,22 +217,30 @@ class GmailService:
                     
                     # Extract sender email more robustly
                     sender_headers = [h for h in reply_msg['payload']['headers'] if h['name'].lower() == 'from']
+                    print("sender_headers")
+                    print(sender_headers)
                     if not sender_headers:
                         continue
                         
                     sender_email = self._extract_email(sender_headers[0]['value'])
+                    print("sender_email")
+                    print(sender_email)
                     
                     # Find recipient with flexible matching
                     recipient = self._find_recipient(campaign, sender_email)
+                    print(recipient)
                     if not recipient:
                         continue
                     
                     # Check if already processed
                     if EmailReply.objects.filter(reply_message_id=reply_msg['id']).exists():
+                        print("already")
                         continue
                         
                     # Save the reply
                     reply_content = self._extract_message_content(reply_msg)
+                    print("reply_content")
+                    print(reply_content)
                     EmailReply.objects.create(
                         campaign=campaign,
                         recipient=recipient,

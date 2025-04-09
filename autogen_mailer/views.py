@@ -56,20 +56,26 @@ class EmailCampaignViewSet(viewsets.ModelViewSet):
     def process_replies(self, request, pk=None):
         """Process replies for a specific campaign with detailed response"""
         try:
+            print("entered for replies")
             campaign = self.get_object()
             gmail = GmailService()
+            print(gmail)
             reply_handler = ReplyHandler()
+            print(reply_handler)
             
             # Step 1: Find new replies
             found_count = gmail.process_replies_for_campaign(campaign)
-            logger.info(f"Found {found_count} new replies for campaign {campaign.id}")
+            print(found_count)
             
             # Step 2: Process replies
             sent_count = reply_handler.process_pending_replies_for_campaign(campaign)
-            logger.info(f"Sent {sent_count} responses for campaign {campaign.id}")
+            print(sent_count)
             
             # Get updated stats
             stats = self.reply_stats(request, pk).data
+            print(stats)
+            print(campaign.name)
+            print(campaign.id)
             
             return Response({
                 'status': 'success',
