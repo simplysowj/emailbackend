@@ -29,7 +29,7 @@ class GmailService:
         self.CREDENTIALS_PATH = getattr(settings, 'GOOGLE_OAUTH_CREDENTIALS_PATH', 
                                       os.path.join(Path.home(), '.gmail_autogen', 'credentials.json'))
         self.TOKEN_PATH = getattr(settings, 'GOOGLE_OAUTH_TOKEN_PATH', 
-                                 os.path.join(Path.home(), '.gmail_autogen', 'token1.json'))
+                                 os.path.join(Path.home(), '.gmail_autogen', 'token.json'))
         self.user_id = user_id
         self.service = self._authenticate()
 
