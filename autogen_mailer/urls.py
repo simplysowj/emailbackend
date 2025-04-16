@@ -22,9 +22,7 @@ urlpatterns = [
     path('campaigns/<int:pk>/preview/', 
          EmailCampaignViewSet.as_view({'get': 'preview'}), 
          name='preview-email'),
-    path('campaigns/<int:pk>/generate_and_send/',
-         EmailCampaignViewSet.as_view({'post': 'generate_and_send'}),
-         name='generate-and-send'),
+    
 
      # NEW REPLY HANDLING ENDPOINTS
     path('campaigns/<int:pk>/reply_stats/',
