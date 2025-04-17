@@ -36,7 +36,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Google OAuth Settings
 GOOGLE_OAUTH_CREDENTIALS_PATH = os.path.join(BASE_DIR, 'credentials', 'gmail_credentials.json')
-GOOGLE_OAUTH_TOKEN_PATH = os.path.join(BASE_DIR, 'credentials', 'gmail_token1.json')
+GOOGLE_OAUTH_TOKEN_PATH = os.path.join(BASE_DIR, 'credentials', 'gmail_token.json')
 
 
 # Quick-start development settings - unsuitable for production
