@@ -1,14 +1,14 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import EmailCampaignViewSet, RecipientViewSet
-
+from .views import LoginView
 router = DefaultRouter()
 router.register(r'campaigns', EmailCampaignViewSet, basename='campaign')
 router.register(r'recipients', RecipientViewSet, basename='recipient')
 
 urlpatterns = [
     path('', include(router.urls)),
-    
+    path('login/', LoginView.as_view(), name='login'),
     # Additional endpoints
     path('campaigns/<int:pk>/import_recipients/', 
          EmailCampaignViewSet.as_view({'post': 'import_recipients'}), 
